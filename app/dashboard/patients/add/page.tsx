@@ -9,9 +9,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { useToast } from "@/hooks/use-toast"
 
 export default function AddPatientPage() {
   const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const { toast } = useToast()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -34,12 +37,33 @@ export default function AddPatientPage() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically send this data to your backend
-    console.log(formData)
-    // Navigate back to the patient list
-    router.push('/dashboard/patients')
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/patients', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to add patient')
+      }
+      const data = await response.json()
+      toast({
+        title: "Success",
+        description: "Patient added successfully",
+      })
+      router.push('/dashboard/patients')
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add patient. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   return (
@@ -170,7 +194,9 @@ export default function AddPatientPage() {
             onChange={handleChange}
           />
         </div>
-        <Button type="submit">Add Patient</Button>
+        <Button type="submit" disabled={isLoading}>
+          {isLoading ? 'Adding...' : 'Add Patient'}
+        </Button>
       </form>
     </div>
   )

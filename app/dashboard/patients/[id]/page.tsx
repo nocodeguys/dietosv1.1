@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Breadcrumb, BreadcrumbItem, BreadcrumbLink, BreadcrumbList, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb"
+import { Skeleton } from "@/components/ui/skeleton"
+import { useToast } from "@/hooks/use-toast"
 
 type Patient = {
   id: string
@@ -28,14 +30,28 @@ export default function PatientPage({ params }: { params: { id: string } }) {
   const router = useRouter()
   const [patient, setPatient] = useState<Patient | null>(null)
   const [isEditing, setIsEditing] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Fetch patient data
     const fetchPatient = async () => {
-      // Replace this with actual API call
-      const response = await fetch(`/api/patients/${params.id}`)
-      const data = await response.json()
-      setPatient(data)
+      try {
+        const response = await fetch(`/api/patients/${params.id}`)
+        if (!response.ok) {
+          throw new Error('Failed to fetch patient')
+        }
+        const data = await response.json()
+        setPatient(data)
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch patient data. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsLoading(false)
+      }
     }
     fetchPatient()
   }, [params.id])
@@ -51,18 +67,44 @@ export default function PatientPage({ params }: { params: { id: string } }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Here you would typically send this data to your backend
-    console.log(patient)
-    // Update patient data
-    await fetch(`/api/patients/${params.id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(patient),
-    })
-    setIsEditing(false)
+    if (!patient) return
+
+    setIsSaving(true)
+    try {
+      const response = await fetch(`/api/patients/${params.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patient),
+      })
+      if (!response.ok) {
+        throw new Error('Failed to update patient')
+      }
+      toast({
+        title: "Success",
+        description: "Patient updated successfully",
+      })
+      setIsEditing(false)
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to update patient. Please try again.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSaving(false)
+    }
   }
 
-  if (!patient) return <div>Loading...</div>
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-64" />
+        <Skeleton className="h-96 w-full" />
+      </div>
+    )
+  }
+
+  if (!patient) return <div>Patient not found</div>
 
   return (
     <div className="space-y-6">
@@ -87,7 +129,7 @@ export default function PatientPage({ params }: { params: { id: string } }) {
       </Breadcrumb>
 
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">{isEditing ? 'Edit Patient' : 'Patient Details'}</h1>
+        <h1 className="text-2xl  font-bold">{isEditing ? 'Edit Patient' : 'Patient Details'}</h1>
         <Button onClick={() => setIsEditing(!isEditing)}>
           {isEditing ? 'Cancel' : 'Edit'}
         </Button>
@@ -206,7 +248,11 @@ export default function PatientPage({ params }: { params: { id: string } }) {
             disabled={!isEditing}
           />
         </div>
-        {isEditing && <Button type="submit">Save Changes</Button>}
+        {isEditing && (
+          <Button type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
+          </Button>
+        )}
       </form>
     </div>
   )
