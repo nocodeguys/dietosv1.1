@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -61,7 +62,9 @@ export function PatientList() {
               <TableCell>{patient.dietaryPreferences}</TableCell>
               <TableCell>{patient.lastAppointment}</TableCell>
               <TableCell>
-                <Button variant="outline" size="sm">View</Button>
+                <Link href={`/dashboard/patients/${patient.id}`}>
+                  <Button variant="outline" size="sm">View</Button>
+                </Link>
               </TableCell>
             </TableRow>
           ))}
