@@ -30,6 +30,18 @@ export function Sidebar() {
               Settings
             </Link>
           </li>
+          <li>
+            <Link href="/dashboard/ingredients" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded">
+              <Utensils className="mr-2" size={20} />
+              Ingredients
+            </Link>
+          </li>
+          <li>
+            <Link href="/dashboard/meals" className="flex items-center p-2 text-gray-700 hover:bg-gray-100 rounded">
+              <Utensils className="mr-2" size={20} />
+              Meals
+            </Link>
+          </li>
         </ul>
       </nav>
     </aside>

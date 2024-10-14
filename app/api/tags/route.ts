@@ -9,7 +9,7 @@ export async function GET(request: Request) {
   const supabase = createRouteHandlerClient({ cookies })
 
   let query = supabase
-    .from('ingredients')
+    .from('tags')
     .select('*')
 
   if (name) {

@@ -9,8 +9,18 @@ export async function GET(request: Request) {
   const supabase = createRouteHandlerClient({ cookies })
 
   let query = supabase
-    .from('ingredients')
-    .select('*')
+    .from('meals')
+    .select(`
+      *,
+      ingredients:meal_ingredients(
+        quantity,
+        unit,
+        ingredient:ingredients(*)
+      ),
+      tags:meal_tags(
+        tag:tags(*)
+      )
+    `)
 
   if (name) {
     query = query.ilike('name', `%${name}%`)
