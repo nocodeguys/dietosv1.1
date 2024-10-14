@@ -1,52 +1,72 @@
 'use client'
-import { useState } from 'react'
-import { useFetchData } from '@/hooks/useFetchData'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Input } from "@/components/ui/input"
 
-type Ingredient = {
+import { useQuery } from '@tanstack/react-query'
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from "@/components/ui/table"
+import { Badge } from "@/components/ui/badge"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+
+interface Ingredient {
   id: string
-  name: string
-  category: string
-  allergens: string[]
-  is_seasonal: boolean
-  is_local: boolean
+  name: { [key: string]: string }
+  energy_kcal: number
+  protein_g: number
+  fat_g: number
+  carbohydrates_g: number
+  created_by: string | null // Assuming this is a user ID or username, allowing for null
 }
 
-export function IngredientList() {
-  const [nameFilter, setNameFilter] = useState('')
-  const { data: ingredients, isLoading, error } = useFetchData<Ingredient[]>(`/api/ingredients?name=${nameFilter}`, [nameFilter])
+async function fetchIngredients(): Promise<Ingredient[]> {
+  const response = await fetch('/api/ingredients')
+  if (!response.ok) {
+    throw new Error('Failed to fetch ingredients')
+  }
+  return response.json()
+}
+
+export default function IngredientList() {
+  const { data: ingredients, isLoading, error } = useQuery<Ingredient[], Error>({
+    queryKey: ['ingredients'],
+    queryFn: fetchIngredients,
+  })
 
   if (isLoading) return <div>Loading...</div>
-  if (error) return <div>An error occurred: {error.message}</div>
+  if (error) return <div>Error: {error.message}</div>
 
   return (
-    <div className="space-y-4">
-      <Input
-        type="text"
-        placeholder="Filter by name..."
-        value={nameFilter}
-        onChange={(e) => setNameFilter(e.target.value)}
-        className="max-w-sm"
-      />
+    <div className="container mx-auto py-10">
       <Table>
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Category</TableHead>
-            <TableHead>Allergens</TableHead>
-            <TableHead>Seasonal</TableHead>
-            <TableHead>Local</TableHead>
+            <TableHead>Energy (kcal)</TableHead>
+            <TableHead>Protein (g)</TableHead>
+            <TableHead>Fat (g)</TableHead>
+            <TableHead>Carbohydrates (g)</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {ingredients && ingredients.map((ingredient) => (
+          {ingredients?.map((ingredient) => (
             <TableRow key={ingredient.id}>
-              <TableCell>{ingredient.name}</TableCell>
-              <TableCell>{ingredient.category}</TableCell>
-              <TableCell>{ingredient.allergens.join(', ')}</TableCell>
-              <TableCell>{ingredient.is_seasonal ? 'Yes' : 'No'}</TableCell>
-              <TableCell>{ingredient.is_local ? 'Yes' : 'No'}</TableCell>
+              <TableCell className="font-medium">{ingredient.name.en || 'Unnamed Ingredient'}</TableCell>
+              <TableCell>
+                <Badge variant="default">{ingredient.energy_kcal}</Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">{ingredient.protein_g}</Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">{ingredient.fat_g}</Badge>
+              </TableCell>
+              <TableCell>
+                <Badge variant="secondary">{ingredient.carbohydrates_g}</Badge>
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
