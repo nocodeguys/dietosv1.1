@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
+import Link from 'next/link'
 import { 
   Table, 
   TableBody, 
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui/button"
 
 interface Ingredient {
   id: string
@@ -19,7 +21,7 @@ interface Ingredient {
   protein_g: number
   fat_g: number
   carbohydrates_g: number
-  created_by: string | null // Assuming this is a user ID or username, allowing for null
+  created_by: string | null
 }
 
 async function fetchIngredients(): Promise<Ingredient[]> {
@@ -49,6 +51,8 @@ export default function IngredientList() {
             <TableHead>Protein (g)</TableHead>
             <TableHead>Fat (g)</TableHead>
             <TableHead>Carbohydrates (g)</TableHead>
+            <TableHead>Created By</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -66,6 +70,21 @@ export default function IngredientList() {
               </TableCell>
               <TableCell>
                 <Badge variant="secondary">{ingredient.carbohydrates_g}</Badge>
+              </TableCell>
+              <TableCell>
+                <Avatar>
+                  <AvatarImage src={`https://api.dicebear.com/6.x/initials/svg?seed=${ingredient.created_by || 'unknown'}`} />
+                  <AvatarFallback>
+                    {ingredient.created_by 
+                      ? ingredient.created_by.substring(0, 2).toUpperCase() 
+                      : 'UN'}
+                  </AvatarFallback>
+                </Avatar>
+              </TableCell>
+              <TableCell>
+                <Link href={`/dashboard/ingredients/${ingredient.id}`} passHref>
+                  <Button variant="outline">View Details</Button>
+                </Link>
               </TableCell>
             </TableRow>
           ))}
